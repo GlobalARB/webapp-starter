@@ -1,7 +1,7 @@
 ---
 description: 
-globs: apps/api/**/*.ts
-alwaysApply: false
+globs: 
+alwaysApply: true
 ---
 # Backend API Architecture and Development Guidelines
 

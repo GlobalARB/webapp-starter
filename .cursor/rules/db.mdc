@@ -1,7 +1,7 @@
 ---
-description: Database rules for working with drizzle schemas and creating backend apis
-globs: apps/**/*.ts
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
 Leverage strings with drizzle types, instead of enums:
 `status: text("status").$type<pending | cancelled |error >().notNull()`
