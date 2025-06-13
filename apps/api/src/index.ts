@@ -1,12 +1,11 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-
-import { postRoutes } from "@/modules/posts";
+import { serve } from "@hono/node-server";
+import { HTTPException } from "hono/http-exception";
 
 import { logger } from "hono/logger";
 import { errorHandler } from "@/pkg/middleware/error";
 import { webhookRoutes } from "@/modules/webhooks/webhook.routes";
-import { chatRoutes } from "@/modules/chat/chat.router";
 import { prettyJSON } from "hono/pretty-json";
 
 const app = new Hono();
@@ -27,22 +26,16 @@ app.use(
 
 app.use("*", prettyJSON());
 
-app.get("/health", (c) => {
-  return c.text("OK");
-});
+app.get("/health", (c) => c.json({ status: "ok" }));
 
 app.onError(errorHandler);
 
-const routes = app
+const apiRoutes = app
   .basePath("/api")
-  .route("/webhooks", webhookRoutes)
-  .route("/posts", postRoutes)
-  .route("/chat", chatRoutes);
-
-export type AppType = typeof routes;
+  .route("/webhooks", webhookRoutes);
 
 export default {
   port: 3004,
-  fetch: app.fetch,
+  fetch: apiRoutes.fetch,
   idleTimeout: 30,
 };
