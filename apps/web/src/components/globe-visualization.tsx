@@ -10,6 +10,9 @@ import dynamic from "next/dynamic";
 const Globe = dynamic(() => import("react-globe.gl"), { ssr: false });
 
 import Ticker from "./ticker";
+import CountryDataPanel from "./country-data-panel";
+import { syntheticCountryData } from "@/lib/synthetic-data";
+import RightNavigationPanel from "./right-navigation-panel";
 
 const WORLD_ATLAS_URL =
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -32,6 +35,12 @@ export default function GlobeVisualization() {
     null
   );
   const globeRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  const countryData = selectedCountry
+    ? syntheticCountryData[selectedCountry.id as string]
+    : null;
 
   useEffect(() => {
     // Load country polygons
@@ -117,10 +126,27 @@ export default function GlobeVisualization() {
       );
     } else {
       // Zoom out to default view
-      globe.pointOfView({ lat: 20, lng: 0, altitude: 3.0 }, 1500);
+      globe.pointOfView({ lat: 20, lng: 0, altitude: 2.0 }, 1500);
       globe.controls().autoRotate = true;
     }
   }, [selectedCountry]);
+
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        setDimensions({ width, height });
+      }
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   const handleCountryClick = (country: object) => {
     const typedCountry = country as CountryFeature;
@@ -138,14 +164,25 @@ export default function GlobeVisualization() {
   return (
     <div className="relative flex h-screen w-screen bg-black text-white">
       {/* Left Panel */}
-      <div className="w-96 bg-gray-900/50 p-4">
-        <p>Left Panel</p>
+      <div className="z-10 w-1/3 shrink-0 border-r border-slate-800 bg-slate-900/70 p-4 backdrop-blur-sm">
+        {selectedCountry ? (
+          <CountryDataPanel
+            selectedCountry={selectedCountry}
+            countryData={countryData}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-gray-400">Select a country to see details.</p>
+          </div>
+        )}
       </div>
 
       {/* Main Content (Globe) */}
-      <div className="flex-1">
+      <div className="relative flex-1" ref={containerRef}>
         <Globe
           ref={globeRef}
+          width={dimensions.width}
+          height={dimensions.height}
           onGlobeReady={() => {
             if (globeRef.current) {
               globeRef.current.controls().autoRotate = true;
@@ -172,11 +209,10 @@ export default function GlobeVisualization() {
       </div>
 
       {/* Right Panel */}
-      <div className="w-20 bg-gray-900/50 p-4">
-        <p>Right</p>
+      <div className="z-10 w-64 shrink-0 border-l border-slate-800 bg-black/50 p-4 backdrop-blur-sm">
+        <RightNavigationPanel />
       </div>
 
-      {/* Bottom Ticker */}
       <Ticker />
     </div>
   );
