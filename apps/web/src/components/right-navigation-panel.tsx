@@ -14,7 +14,14 @@ import {
 } from "lucide-react";
 import { Label } from "./ui/label";
 
-function ViewControls() {
+type ViewMode = "GLOBE" | "FLAT";
+
+interface ViewControlsProps {
+  viewMode: ViewMode;
+  onViewChange: (mode: ViewMode) => void;
+}
+
+function ViewControls({ viewMode, onViewChange }: ViewControlsProps) {
   return (
     <div className="space-y-4 rounded-lg bg-gray-800/50 p-3">
       <div className="flex items-center justify-between">
@@ -23,7 +30,13 @@ function ViewControls() {
         </Label>
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold">FLAT</span>
-          <Switch id="map-mode" defaultChecked />
+          <Switch
+            id="map-mode"
+            checked={viewMode === "GLOBE"}
+            onCheckedChange={(checked) =>
+              onViewChange(checked ? "GLOBE" : "FLAT")
+            }
+          />
           <span className="text-xs font-bold">GLOBE</span>
         </div>
       </div>
@@ -113,7 +126,15 @@ function ActionButtons() {
   );
 }
 
-export default function RightNavigationPanel() {
+interface RightNavigationPanelProps {
+  viewMode: ViewMode;
+  onViewChange: (mode: ViewMode) => void;
+}
+
+export default function RightNavigationPanel({
+  viewMode,
+  onViewChange,
+}: RightNavigationPanelProps) {
   return (
     <div className="flex h-full flex-col justify-between p-1">
       <div className="space-y-4">
@@ -122,7 +143,7 @@ export default function RightNavigationPanel() {
                 <Menu />
             </Button>
         </div>
-        <ViewControls />
+        <ViewControls viewMode={viewMode} onViewChange={onViewChange} />
         <NavigationButtons />
       </div>
 

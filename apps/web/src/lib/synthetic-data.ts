@@ -2,6 +2,7 @@ export interface CountryData {
   iso: string;
   name: string;
   score_title: string;
+  alignment: "US_ALIGNED" | "NEUTRAL" | "CHINA_ALIGNED";
   reserves: { name: string; value: number; max: number }[];
   exports: { name: string; value: number; max: number }[];
   production: { name: string; value: number; max: number }[];
@@ -12,6 +13,7 @@ export const syntheticCountryData: Record<string, CountryData> = {
     iso: "USA",
     name: "United States",
     score_title: "Moderate Cobalt Reserves",
+    alignment: "US_ALIGNED",
     reserves: [
       { name: "Lithium", value: 1000, max: 10000 },
       { name: "Cobalt", value: 500, max: 2000 },
@@ -31,6 +33,7 @@ export const syntheticCountryData: Record<string, CountryData> = {
     iso: "CAN",
     name: "Canada",
     score_title: "High Potash Production",
+    alignment: "US_ALIGNED",
     reserves: [
         { name: "Potash", value: 9000, max: 10000 },
         { name: "Nickel", value: 4500, max: 5000 },
@@ -49,6 +52,7 @@ export const syntheticCountryData: Record<string, CountryData> = {
     iso: "RUS",
     name: "Russia",
     score_title: "Major Nickel Exporter",
+    alignment: "CHINA_ALIGNED",
     reserves: [
         { name: "Nickel", value: 4800, max: 5000 },
         { name: "Palladium", value: 9500, max: 10000 },
@@ -67,6 +71,7 @@ export const syntheticCountryData: Record<string, CountryData> = {
     iso: "CHN",
     name: "China",
     score_title: "Dominant Rare Earths Producer",
+    alignment: "CHINA_ALIGNED",
     reserves: [
         { name: "Rare Earths", value: 9800, max: 10000 },
         { name: "Gold", value: 2000, max: 5000 },

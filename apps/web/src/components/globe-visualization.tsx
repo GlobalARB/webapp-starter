@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { feature } from "topojson-client";
 import { Topology } from "topojson-specification";
 import type { FeatureCollection, Feature } from "geojson";
+import cn from "clsx";
 
 // Dynamically import the Globe component
 import dynamic from "next/dynamic";
@@ -13,6 +14,7 @@ import Ticker from "./ticker";
 import CountryDataPanel from "./country-data-panel";
 import { syntheticCountryData } from "@/lib/synthetic-data";
 import RightNavigationPanel from "./right-navigation-panel";
+import FlatMap from "./flat-map";
 
 const WORLD_ATLAS_URL =
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -22,6 +24,8 @@ type CountryFeature = Feature & {
     name: string;
   };
 };
+
+type ViewMode = "GLOBE" | "FLAT";
 
 export default function GlobeVisualization() {
   const [countries, setCountries] = useState<FeatureCollection>({
@@ -37,6 +41,7 @@ export default function GlobeVisualization() {
   const globeRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [viewMode, setViewMode] = useState<ViewMode>("GLOBE");
 
   const countryData = selectedCountry
     ? syntheticCountryData[selectedCountry.id as string]
@@ -148,6 +153,21 @@ export default function GlobeVisualization() {
     };
   }, []);
 
+  const getCountryColor = (feature: any) => {
+    const data = syntheticCountryData[feature.id];
+    if (data) {
+      switch (data.alignment) {
+        case "US_ALIGNED":
+          return "rgba(34, 197, 94, 0.7)";
+        case "CHINA_ALIGNED":
+          return "rgba(239, 68, 68, 0.7)";
+        default:
+          return "rgba(245, 158, 11, 0.7)";
+      }
+    }
+    return "rgba(107, 114, 128, 0.5)";
+  };
+
   const handleCountryClick = (country: object) => {
     const typedCountry = country as CountryFeature;
     if (selectedCountry && selectedCountry.id === typedCountry.id) {
@@ -179,38 +199,63 @@ export default function GlobeVisualization() {
 
       {/* Main Content (Globe) */}
       <div className="relative flex-1" ref={containerRef}>
-        <Globe
-          ref={globeRef}
-          width={dimensions.width}
-          height={dimensions.height}
-          onGlobeReady={() => {
-            if (globeRef.current) {
-              globeRef.current.controls().autoRotate = true;
-              globeRef.current.controls().autoRotateSpeed = 0.2;
-            }
-          }}
-          globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-          backgroundColor="rgba(0,0,0,0)"
-          polygonsData={countries.features}
-          polygonCapColor={(feat: object) =>
-            feat === hoveredCountry
-              ? "rgba(255, 165, 0, 0.9)"
-              : "rgba(255, 165, 0, 0.5)"
-          }
-          polygonSideColor={(feat: object) =>
-            feat === selectedCountry ? "#ffffff" : "rgba(0, 0, 0, 0.05)"
-          }
-          polygonStrokeColor={(feat: object) =>
-            feat === selectedCountry ? "#a0d1ff" : "#665e5e"
-          }
-          onPolygonHover={handlePolygonHover}
-          onPolygonClick={handleCountryClick}
-        />
+        <div
+          className={cn(
+            "absolute inset-0 transition-opacity duration-500",
+            viewMode === "GLOBE" ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+        >
+          {viewMode === 'GLOBE' && (
+            <Globe
+              ref={globeRef}
+              width={dimensions.width}
+              height={dimensions.height}
+              onGlobeReady={() => {
+                if (globeRef.current) {
+                  globeRef.current.controls().autoRotate = true;
+                  globeRef.current.controls().autoRotateSpeed = 0.2;
+                }
+              }}
+              globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+              backgroundColor="rgba(0,0,0,0)"
+              polygonsData={countries.features}
+              polygonCapColor={(feat: object) => {
+                if (feat === selectedCountry) return "rgba(59, 130, 246, 0.7)";
+                if (feat === hoveredCountry) return "rgba(167, 139, 250, 0.7)";
+                return "rgba(107, 114, 128, 0.5)";
+              }}
+              polygonSideColor={(feat: object) =>
+                feat === selectedCountry ? "#ffffff" : "rgba(0, 0, 0, 0.05)"
+              }
+              polygonStrokeColor={(feat: object) =>
+                feat === selectedCountry ? "#a0d1ff" : "#665e5e"
+              }
+              onPolygonHover={handlePolygonHover}
+              onPolygonClick={handleCountryClick}
+            />
+          )}
+        </div>
+        <div
+          className={cn(
+            "absolute inset-0 transition-opacity duration-500",
+            viewMode === "FLAT" ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+        >
+          {viewMode === "FLAT" && (
+            <FlatMap
+              selectedCountry={selectedCountry}
+              hoveredCountry={hoveredCountry}
+              onCountryClick={handleCountryClick}
+              onCountryHover={handlePolygonHover}
+              getCountryColor={getCountryColor}
+            />
+          )}
+        </div>
       </div>
 
       {/* Right Panel */}
       <div className="z-10 w-64 shrink-0 border-l border-slate-800 bg-black/50 p-4 backdrop-blur-sm">
-        <RightNavigationPanel />
+        <RightNavigationPanel viewMode={viewMode} onViewChange={setViewMode} />
       </div>
 
       <Ticker />
